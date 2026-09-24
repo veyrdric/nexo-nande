@@ -1,0 +1,30 @@
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+docs/
+
+# Dependencias y builds
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Datos locales y temporales
+scraper/data/raw/
+scraper/data/cache/
+tmp/
+*.log
+
+# Imágenes Docker offline (pesadas: van por pendrive)
+DOCKER_IMAGENES/*.tar
+
+# Claude Code: configuración personal
+.claude/settings.local.json
+
+# Sistema
+.DS_Store
+Thumbs.db
