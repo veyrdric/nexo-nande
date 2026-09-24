@@ -4,6 +4,7 @@
 *.pem
 *.key
 docs/
+temp/
 
 # Dependencias y builds
 node_modules/
