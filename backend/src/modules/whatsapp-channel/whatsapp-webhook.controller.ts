@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
-import { Controller, Get, HttpStatus, Logger, Post, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Inject, Logger, Post, Query, Req, Res } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ResolveInquiryUseCase } from '../chat-orchestration/index.js';
+import { RATE_LIMIT_PORT, SESSION_MEMORY_PORT, type IRateLimitPort, type ISessionMemoryPort } from '../session-memory/index.js';
 import { requireEnv } from '../../shared/env.js';
 import { MessageDedupService } from './message-dedup.service.js';
 import { WhatsappClientService } from './whatsapp-client.service.js';
@@ -12,6 +13,7 @@ import { buildWhatsAppReplyText, extractFirstMessage } from './whatsapp-message.
 const UNSUPPORTED_TYPE_REPLY =
   'Por ahora solo puedo leer mensajes de texto. Escribime tu consulta como texto, por favor.';
 const BORRAR_REPLY = 'Listo, borré tus datos de esta conversación.';
+const RATE_LIMIT_REPLY = 'Estás mandando muchos mensajes seguidos. Esperá un minuto y volvé a intentar.';
 
 // docs/02-contratos.md §1
 @Controller('webhooks/whatsapp')
@@ -23,6 +25,8 @@ export class WhatsappWebhookController {
     private readonly dedupService: MessageDedupService,
     private readonly whatsappClient: WhatsappClientService,
     private readonly resolveInquiry: ResolveInquiryUseCase,
+    @Inject(SESSION_MEMORY_PORT) private readonly sessionMemory: ISessionMemoryPort,
+    @Inject(RATE_LIMIT_PORT) private readonly rateLimit: IRateLimitPort,
   ) {}
 
   @Get()
@@ -76,12 +80,19 @@ export class WhatsappWebhookController {
     const text = message.text?.trim() ?? '';
 
     if (text.toUpperCase() === 'BORRAR') {
-      // TODO(session-memory): limpiar la sesión real en Redis cuando exista ese módulo.
+      await this.sessionMemory.clearSession(phoneHash);
       await this.whatsappClient.sendText(message.from, BORRAR_REPLY);
       return;
     }
 
-    const { answer } = await this.resolveInquiry.execute({ message: text });
+    const limitPerMinute = Number(requireEnv('RATE_LIMIT_WA_PER_PHONE_PER_MIN'));
+    const allowed = await this.rateLimit.isAllowed(`wa:${phoneHash}`, limitPerMinute);
+    if (!allowed) {
+      await this.whatsappClient.sendText(message.from, RATE_LIMIT_REPLY);
+      return;
+    }
+
+    const { answer } = await this.resolveInquiry.execute({ sessionKey: phoneHash, message: text });
     await this.whatsappClient.sendText(message.from, buildWhatsAppReplyText(answer));
   }
 }
