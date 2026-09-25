@@ -40,14 +40,31 @@ export class OpenAiCompatibleAdapter implements IAiCompletionPort {
     const timeoutMs = Number(requireEnv('LLM_TIMEOUT_MS'));
 
     const userPrompt = buildUserPrompt(request);
+    const retrievedSourceOrigins = new Set(
+      request.retrievedChunks.map((chunk) => new URL(chunk.sourceUrl).origin),
+    );
 
-    const firstAttempt = await this.callAndValidate(config, request.systemPrompt, userPrompt, maxTokens, timeoutMs);
+    const firstAttempt = await this.callAndValidate(
+      config,
+      request.systemPrompt,
+      userPrompt,
+      maxTokens,
+      timeoutMs,
+      retrievedSourceOrigins,
+    );
     if (firstAttempt) return firstAttempt;
 
     // "Si no valida, se reintenta una vez" (backend/CLAUDE.md).
     this.logger.warn('Respuesta del LLM inválida, reintentando una vez');
-    const retryPrompt = `${userPrompt}\n\n(Tu respuesta anterior no era un JSON válido según el esquema pedido. Respondé EXCLUSIVAMENTE el JSON, sin texto adicional ni explicaciones.)`;
-    const secondAttempt = await this.callAndValidate(config, request.systemPrompt, retryPrompt, maxTokens, timeoutMs);
+    const retryPrompt = `${userPrompt}\n\n(Tu respuesta anterior no era válida: o no era JSON, o citaba una fuente que no está en el CONTEXTO. Respondé EXCLUSIVAMENTE el JSON pedido, citando solo fuentes del CONTEXTO, sin texto adicional ni explicaciones.)`;
+    const secondAttempt = await this.callAndValidate(
+      config,
+      request.systemPrompt,
+      retryPrompt,
+      maxTokens,
+      timeoutMs,
+      retrievedSourceOrigins,
+    );
     if (secondAttempt) return secondAttempt;
 
     this.logger.error('Respuesta del LLM inválida tras el reintento, se usa el mensaje de derivación');
@@ -60,6 +77,7 @@ export class OpenAiCompatibleAdapter implements IAiCompletionPort {
     userPrompt: string,
     maxTokens: number,
     timeoutMs: number,
+    retrievedSourceOrigins: ReadonlySet<string>,
   ): Promise<StructuredAnswer | null> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -96,10 +114,15 @@ export class OpenAiCompatibleAdapter implements IAiCompletionPort {
       try {
         parsedJson = JSON.parse(rawContent);
       } catch {
+        this.logger.debug(`Respuesta del LLM no es JSON válido: ${rawContent}`);
         return null;
       }
 
-      return validateLlmResponse(parsedJson);
+      const validated = validateLlmResponse(parsedJson, retrievedSourceOrigins);
+      if (!validated) {
+        this.logger.debug(`Respuesta del LLM no pasó la validación: ${rawContent}`);
+      }
+      return validated;
     } catch (error) {
       this.logger.error('Falló la llamada al LLM', error as Error);
       return null;
