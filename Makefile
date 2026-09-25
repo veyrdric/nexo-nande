@@ -7,7 +7,7 @@ GITLEAKS_IMAGE := zricethezav/gitleaks:latest  # PENDIENTE: fijar versión
 PACKAGES := backend frontend scraper
 
 .DEFAULT_GOAL := help
-.PHONY: help env-check up down restart logs ps migrate seed scrape scrape-dry test eval audit tunnel clean-db
+.PHONY: help env-check up down restart logs ps migrate seed review scrape scrape-dry test eval audit tunnel clean-db rag-up rag-send rag-curated rag-review
 
 help: ## Lista los comandos disponibles
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -39,6 +39,9 @@ migrate: ## Aplica migraciones (M1)
 seed: migrate ## Carga los datos curados del IPF como aprobados (M1)
 	cd backend && npm run db:seed
 
+review: ## Revisión de lo que entró por n8n/scraper (make review a="list" | a="approve CODE")
+	cd backend && npm run db:review -- $(or $(a),list)
+
 scrape: ## Ejecuta el scraper del IPF y deja JSON en scraper/data/ (M2)
 	@test -f scraper/package.json || { echo "Pendiente: M2 crea scraper/"; exit 1; }
 	cd scraper && npm run scrape
@@ -46,6 +49,18 @@ scrape: ## Ejecuta el scraper del IPF y deja JSON en scraper/data/ (M2)
 scrape-dry: ## Scraper sin escribir ni enviar nada (M2)
 	@test -f scraper/package.json || { echo "Pendiente: M2 crea scraper/"; exit 1; }
 	cd scraper && npm run scrape -- --dry-run
+
+rag-up: ## Levanta n8n con el workflow del RAG (rag-ingest) importado y publicado
+	bash scripts/rag-n8n-up.sh
+
+rag-send: ## Manda lo scrapeado (scraper/data/scraped) a n8n para indexarlo (entra pending_review)
+	cd scraper && npm run send
+
+rag-curated: ## Manda las fichas curadas a mano a n8n (entran aprobadas)
+	cd scraper && npm run send:curated
+
+rag-review: ## Revisión humana del RAG (make rag-review a="list pending_review" | a="approve CODE" | a="approve-prefix IPF-")
+	cd backend && npm run -s review -- $(or $(a),list)
 
 test: ## Corre las pruebas de cada paquete existente
 	@set -e; for p in $(PACKAGES); do \

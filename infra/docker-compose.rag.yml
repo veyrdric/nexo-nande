@@ -1,0 +1,21 @@
+# Override para el RAG con n8n (se suma a docker-compose.yml).
+# Por qué red "host": el firewall del host (ufw) bloquea el tráfico de los contenedores
+# hacia el host, y Ollama escucha solo en 127.0.0.1. Con red host, n8n llega a Ollama
+# (embeddings) y al backend por loopback, sin abrir puertos al exterior.
+# Uso: ver scripts/rag-n8n-up.sh
+services:
+  n8n:
+    network_mode: host
+    ports: !reset []
+    extra_hosts: !reset []
+    environment:
+      N8N_PORT: ${N8N_HOST_PORT:-5679}
+      # Solo loopback: nada queda expuesto a la red del evento
+      N8N_LISTEN_ADDRESS: 127.0.0.1
+      # El broker de task runners usa 5679 por defecto: se mueve para no chocar con N8N_PORT
+      N8N_RUNNERS_BROKER_PORT: "5690"
+      OLLAMA_URL: http://127.0.0.1:11434
+      EMBED_MODEL: bge-m3
+      RAG_BACKEND_URL: http://127.0.0.1:3005
+      # Lo inyecta scripts/rag-n8n-up.sh desde temp/backend-ollama/.env (mismo secreto que el backend)
+      RAG_INGEST_SECRET: ${RAG_INGEST_SECRET:?falta RAG_INGEST_SECRET}

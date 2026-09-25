@@ -24,7 +24,7 @@ tmp/
 DOCKER_IMAGENES/*.tar
 
 # Claude Code: configuración personal
-.claude/settings.local.json
+.claude/
 
 # Sistema
 .DS_Store

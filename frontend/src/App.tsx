@@ -1,7 +1,7 @@
-import { CitizenChatPage } from './pages/citizen-chat'
+import { NexoNandePage } from './pages/nexo-nande'
 
 function App() {
-  return <CitizenChatPage />
+  return <NexoNandePage />
 }
 
 export default App

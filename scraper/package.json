@@ -1,0 +1,14 @@
+{
+  "name": "scraper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Scraper de las páginas públicas del IPF y del Gobierno de Formosa para el RAG (vía n8n)",
+  "scripts": {
+    "scrape": "node --env-file-if-exists=.env src/run.ts scrape",
+    "scrape:dry": "node --env-file-if-exists=.env src/run.ts scrape --dry-run",
+    "send": "node --env-file-if-exists=.env src/run.ts send",
+    "send:curated": "node --env-file-if-exists=.env src/run.ts curated",
+    "test": "node --test src/*.test.ts"
+  }
+}

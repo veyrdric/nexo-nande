@@ -76,14 +76,19 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             {message.sources.map((source, i) => (
               <span key={source.url}>
                 {i > 0 && ', '}
-                <a
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-celeste"
-                >
-                  {source.title}
-                </a>
+                {/^https?:\/\//.test(source.url) ? (
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-celeste"
+                  >
+                    {source.title}
+                  </a>
+                ) : (
+                  // Fuentes sin URL real (ej. documentos ficticios del demo): solo texto.
+                  <span>{source.title}</span>
+                )}
               </span>
             ))}
           </p>

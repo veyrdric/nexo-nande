@@ -1,0 +1,84 @@
+{
+  "_comentario": "Qué se scrapea: solo el sitio del IPF. Solo dominios de esta lista. 'store': guarda la página como documento; 'follow': patrones de enlaces a seguir (regex sobre el path).",
+  "maxPagesPerSite": 40,
+  "sites": [
+    {
+      "id": "ipf",
+      "origin": "https://ipfconecta.formosa.gob.ar",
+      "codePrefix": "IPF",
+      "contentStart": "<main",
+      "contentEnd": "</main>",
+      "seeds": [
+        "/",
+        "/carreras/desarrollo-software",
+        "/carreras/electromedicina",
+        "/carreras/mecatronica",
+        "/carreras/quimica-industrial",
+        "/carreras/telecomunicaciones",
+        "/beneficios/transporte",
+        "/vinculacion-tecnologica",
+        "/novedades"
+      ],
+      "store": [
+        "^/$",
+        "^/carreras/[a-z0-9-]+$",
+        "^/beneficios/[a-z0-9-]+$",
+        "^/vinculacion-tecnologica$",
+        "^/institucional$",
+        "^/contacto$"
+      ],
+      "follow": [
+        "^/carreras/[a-z0-9-]+$",
+        "^/beneficios/[a-z0-9-]+$",
+        "^/institucional$",
+        "^/contacto$"
+      ]
+    },
+    {
+      "id": "gob",
+      "origin": "https://www.formosa.gob.ar",
+      "codePrefix": "GOB",
+      "contentStart": "",
+      "contentEnd": "",
+      "seeds": [
+        "/subempleo",
+        "/subempleo/capacitaciones",
+        "/subempleo/documentos",
+        "/produccion",
+        "/produccion/desarrolloruralterritorial",
+        "/produccion/desarrolloruralterritorial/programafinanciamiento",
+        "/produccion/lineasdecredito",
+        "/produccion/produccionsustentable",
+        "/ica",
+        "/ica/institucional",
+        "/ica/areas",
+        "/ica/etnias",
+        "/ica/tramites",
+        "/cultura/artistas",
+        "/noticia/24155/1301/el_gobierno_provincial_apoya_al_sector_ladrillero",
+        "/defensaconsumidor",
+        "/defensaconsumidor/informacionutil/derechosdelosconsumidores",
+        "/defensaconsumidor/informacionutil/consejosalosconsumidores",
+        "/paippa",
+        "/paippa/institucional",
+        "/paippa/feriasfrancas"
+      ],
+      "store": [
+        "^/subempleo.*",
+        "^/produccion.*",
+        "^/ica.*",
+        "^/cultura/artistas.*",
+        "^/noticia/24155/1301/el_gobierno_provincial_apoya_al_sector_ladrillero$",
+        "^/defensaconsumidor.*",
+        "^/paippa.*"
+      ],
+      "follow": [
+        "^/subempleo/.*",
+        "^/produccion/.*",
+        "^/ica/.*",
+        "^/paippa/.*",
+        "^/defensaconsumidor/.*"
+      ]
+    }
+  ]
+}

@@ -72,15 +72,23 @@ services:
       EXECUTIONS_DATA_MAX_AGE: 24
       N8N_DIAGNOSTICS_ENABLED: "false"
       INGEST_HMAC_SECRET: ${INGEST_HMAC_SECRET}
-      BACKEND_INTERNAL_URL: http://backend:${BACKEND_PORT}
+      # host.docker.internal si el backend corre en el host; http://backend:3000 con el perfil "app".
+      BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL}
+      # n8n 2.x bloquea $env en los nodos por defecto; el workflow lee INGEST_HMAC_SECRET y
+      # BACKEND_INTERNAL_URL. Este contenedor no recibe otros secretos (no usa env_file).
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       # Subir el límite de payload para aceptar PDFs del IPF (default de n8n: 16 MB).
       N8N_PAYLOAD_SIZE_MAX: "64"
       N8N_FORMDATA_FILE_SIZE_MAX: "64"
+    extra_hosts:
+      # En Linux, host.docker.internal no existe por defecto.
+      - "host.docker.internal:host-gateway"
     volumes:
       - n8ndata:/home/node/.n8n
       - ../n8n/workflows:/workflows:ro
     ports:
-      - "127.0.0.1:5678:5678"
+      # N8N_HOST_PORT permite convivir con otro n8n ya instalado en la máquina.
+      - "127.0.0.1:${N8N_HOST_PORT:-5678}:5678"
 
   # --- Aplicación en contenedores (opcional, perfil "app") ----------------------
   backend:

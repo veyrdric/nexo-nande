@@ -1,17 +1,100 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+@import "tw-animate-css";
 
-@theme {
+/* Tokens de Shadcn UI sobrescritos con la paleta de Nexo Ñandé */
+:root {
+  --background: #ffffff;
+  --foreground: #1f2937;
+  --card: #ffffff;
+  --card-foreground: #1f2937;
+  --popover: #ffffff;
+  --popover-foreground: #1f2937;
+  --primary: #077937;
+  --primary-foreground: #ffffff;
+  --secondary: #75aadb;
+  --secondary-foreground: #ffffff;
+  --accent: #fcbf49;
+  --accent-foreground: #1f2937;
+  --muted: #f3f6f9;
+  --muted-foreground: #6b7280;
+  --border: #e5edf5;
+  --input: #dbe7f3;
+  --ring: #75aadb;
+  --radius: 1.25rem;
+}
+
+@theme inline {
+  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Rubik", ui-sans-serif, system-ui, sans-serif;
+
+  --color-celeste: #75aadb;
+  --color-celeste-50: #f1f7fc;
+  --color-celeste-100: #e3eef8;
   --color-verde: #077937;
   --color-verde-dark: #05602b;
-  --color-celeste: #4fb8e8;
   --color-amarillo: #fcbf49;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
-:root {
-  color-scheme: light;
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+  body {
+    @apply text-foreground font-sans antialiased;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    /* Rubik es ancha: compactamos letras y palabras */
+    letter-spacing: -0.012em;
+    word-spacing: -0.06em;
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.025em;
+    word-spacing: -0.08em;
+  }
+  /* Oculta los spinners nativos del input numérico */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
-body {
-  margin: 0;
-  font-size: 17px;
+/* Respiración suave del gauchito */
+@keyframes breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.04); }
+}
+.animate-breathe {
+  animation: breathe 3.2s ease-in-out infinite;
+}
+
+/* Flotación lenta del globo del Gauchito */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: float 3.5s ease-in-out infinite;
 }

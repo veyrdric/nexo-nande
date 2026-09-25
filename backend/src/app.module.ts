@@ -1,10 +1,25 @@
 import { Module } from '@nestjs/common';
+import { CoreModule } from './core/core.module.js';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { RedisModule } from './modules/redis/redis.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { OllamaModule } from './modules/ollama/ollama.module.js';
+import { RagModule } from './modules/rag/rag.module.js';
+import { ChatModule } from './modules/chat/chat.module.js';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module.js';
 import { AppController } from './app.controller.js';
-import { WebChannelApiModule } from './modules/web-channel-api/index.js';
-import { WhatsappChannelModule } from './modules/whatsapp-channel/index.js';
 
 @Module({
-  imports: [WebChannelApiModule, WhatsappChannelModule],
+  imports: [
+    CoreModule,
+    DatabaseModule,
+    RedisModule,
+    AuthModule,
+    OllamaModule,
+    RagModule,
+    ChatModule,
+    WhatsappModule,
+  ],
   controllers: [AppController],
   providers: [],
 })

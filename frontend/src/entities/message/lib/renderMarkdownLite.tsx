@@ -43,10 +43,12 @@ export function renderMarkdownLite(markdown: string): ReactNode {
   return <div className="flex flex-col gap-2">{blocks}</div>
 }
 
+// Acepta *simple* (lo que pide el prompt) y **doble** (lo que a veces devuelve el modelo).
 function renderInlineBold(text: string): ReactNode[] {
-  return text.split(/(\*[^*]+\*)/g).map((part, i) => {
-    if (part.length > 1 && part.startsWith('*') && part.endsWith('*')) {
-      return <strong key={i}>{part.slice(1, -1)}</strong>
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, i) => {
+    const bold = /^\*\*([^*]+)\*\*$/.exec(part) ?? /^\*([^*]+)\*$/.exec(part)
+    if (bold) {
+      return <strong key={i}>{bold[1]}</strong>
     }
     return <span key={i}>{part}</span>
   })

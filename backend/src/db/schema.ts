@@ -36,6 +36,14 @@ export const editors = pgTable('editors', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const knowledgeDocuments = pgTable(
   'knowledge_documents',
   {
@@ -43,6 +51,9 @@ export const knowledgeDocuments = pgTable(
     code: varchar('code', { length: 50 }).notNull().unique(),
     title: varchar('title', { length: 300 }).notNull(),
     summary: text('summary').notNull(),
+    // Texto completo de documentos largos (PDF vía n8n). Se trocea recién al aprobar
+    // (docs/03-scraper-y-rag.md §4.2); null en fichas curadas cortas.
+    fullText: text('full_text'),
     requirements: jsonb('requirements').notNull().default([]),
     office: jsonb('office'),
     sourceUrl: text('source_url').notNull(),
