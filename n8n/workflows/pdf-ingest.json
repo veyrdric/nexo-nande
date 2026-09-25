@@ -1,0 +1,205 @@
+{
+  "name": "pdf-ingest",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "34305a4f-4053-4600-b2c2-08531169bd12",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nodo 3: Normalizador de PDF al contrato de ingesta del backend\n// Referencia: docs/02-contratos.md §5\n\n// Traer el texto extraído por el nodo Extract from File\nconst rawText = $input.first().json.text || '';\n\n// Metadata que podría venir del panel de carga (por ahora vacía, después la sumamos)\nconst meta = {};\n\n// Limpieza básica del texto: normalizar saltos, espacios, líneas en blanco\nconst cleanedText = rawText\n  .replace(/\\r\\n/g, '\\n')\n  .replace(/[ \\t]+/g, ' ')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// Armar el documento con la forma exacta que espera el backend\nconst documento = {\n  code: meta.code || `IPF-PDF-${Date.now()}`,\n  title: meta.title || 'Documento cargado por el equipo editorial',\n  summary: cleanedText.slice(0, 500),\n  requirements: [],\n  office: null,\n  sourceUrl: meta.sourceUrl || 'N/A (carga manual del panel)',\n  capturedAt: new Date().toISOString().slice(0, 10),\n  validUntil: meta.validUntil || null,\n  isFictional: meta.isFictional === true,\n  fullText: cleanedText,\n};\n\n// Devolver en el formato que espera el próximo nodo\nreturn [\n  {\n    json: {\n      documents: [documento],\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "13b21a1a-c689-4795-916b-03382ee67843",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pdf-ingest",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0c0aa7cb-4b2f-46c3-87cd-0a1b3df9f00e",
+      "name": "Webhook",
+      "webhookId": "81427780-f060-4568-87ce-dd2ed8a9bdfa"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nodo 4: Serializar el body a string\n// El próximo nodo (Crypto) se encarga de firmarlo con HMAC-SHA256\n\nconst bodyObject = $input.first().json;\nconst bodyString = JSON.stringify(bodyObject);\n\nreturn [\n  {\n    json: {\n      body: bodyString,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        340
+      ],
+      "id": "a4c5ce46-5da1-4b81-a064-fdb8ae6ad04e",
+      "name": "Serialize Body"
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ $json.body }}",
+        "secret": "={{ $env.INGEST_HMAC_SECRET }}"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        500,
+        340
+      ],
+      "id": "bbf21861-03a6-4c5d-a90e-566ddced3173",
+      "name": "Crypto"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nodo 6: Combinar body + firma con prefijo estándar\nconst input = $input.first().json;\n\nreturn [\n  {\n    json: {\n      body: input.body,\n      signature: `sha256=${input.data}`,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        340
+      ],
+      "id": "e88d7ef1-5bbd-4664-b3fd-10d855468c54",
+      "name": "Format Output"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/63f96db1-53bc-41ab-b6aa-c5fbbdabd4fd",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ingest-Signature",
+              "value": "={{ $json.signature }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        340
+      ],
+      "id": "a5b47685-24ee-4491-a93b-8566b42c53a7",
+      "name": "Send to Backend"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Serialize Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Serialize Body": {
+      "main": [
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Send to Backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "999cf807-c9c4-4443-b204-e2c9891f6d7a",
+  "meta": {
+    "instanceId": "784eec89fdeea3b25041111a6b70b8ee0dfe2e6e291357ee9647a08b432a6141"
+  },
+  "id": "n5vWMAGo1I1ro2B9",
+  "tags": []
+}
