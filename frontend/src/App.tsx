@@ -1,5 +1,7 @@
+import { CitizenChatPage } from './pages/citizen-chat'
+
 function App() {
-  return null
+  return <CitizenChatPage />
 }
 
 export default App
