@@ -73,6 +73,9 @@ services:
       N8N_DIAGNOSTICS_ENABLED: "false"
       INGEST_HMAC_SECRET: ${INGEST_HMAC_SECRET}
       BACKEND_INTERNAL_URL: http://backend:${BACKEND_PORT}
+      # Subir el límite de payload para aceptar PDFs del IPF (default de n8n: 16 MB).
+      N8N_PAYLOAD_SIZE_MAX: ${N8N_PAYLOAD_SIZE_MAX:-64}
+      N8N_FORMDATA_FILE_SIZE_MAX: ${N8N_FORMDATA_FILE_SIZE_MAX:-64}
     volumes:
       - n8ndata:/home/node/.n8n
       - ../n8n/workflows:/workflows:ro
