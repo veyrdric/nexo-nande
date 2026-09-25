@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-verde: #077937;
+  --color-verde-dark: #05602b;
+  --color-celeste: #4fb8e8;
+  --color-amarillo: #fcbf49;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-size: 17px;
+}
